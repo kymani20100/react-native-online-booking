@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, Platform, Dimensions, Image, ScrollView, Button,TextInput } from 'react-native';
+import React, {useState, useRef, useEffect} from 'react';
+import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, Platform, ImageBackground, Dimensions, Image, ScrollView,FlatList } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
 import { Octicons } from '@expo/vector-icons';
@@ -7,109 +7,86 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
-
-
-
 const {width, height} = Dimensions.get('screen');
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Animatable from 'react-native-animatable';
-import Select from '../components/select';
-import List from '../components/List'
-
-
+import { useSelector, useDispatch } from 'react-redux';
+import * as currencyActions from '../store/actions/currency';
+import SelectShimmer from "../components/SelectShimmer";
+import { Button, TextInput, Chip } from 'react-native-paper';
+import { Row, Grid } from "react-native-easy-grid";
+import { Audio } from 'expo-av';
 
 const ChangeCurrencyScreen = ({navigation}) => {
-    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-    const [tripDate, setTripDate] = useState([]);
-    const [formData, setFormData] = useState({
-        cityFrom: '',
-        cityTo: '',
-        TripDate: '',
-    });
+    const [loading, setLoading] = useState(true);
+    const [sound, setSound] = useState();
+    const currency = useSelector(state =>  state.currency.availableCurrency);
+    const dispatch = useDispatch();
 
-    const limit = (string = '', limit = 0) => {  
-        return string.substring(0, limit)
-      }
+    useEffect(() => {
+        dispatch(currencyActions.fetchCurrency());
+    },[dispatch])
 
-    const [cityFrom, setCityFrom] = useState('');
-    const [cityTo, setCityTo] = useState('');
+    useEffect(() => {
+        setTimeout(() => {
+            setLoading(false);
+        }, 8000)
+    },[])
 
-    const showDatePicker = () => {
-      setDatePickerVisibility(true);
-    };
-  
-    const hideDatePicker = () => {
-      setDatePickerVisibility(false);
-    };
-  
-    const handleConfirm = (date) => {
-    //   console.warn("A date has been picked: ", date);
-    const selectedDate = new Date(date); // pass in date param here
-    const formattedDate = `${selectedDate.getMonth()+1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
-
-        setTripDate(formattedDate);
-        handleTripDate(date)
-        hideDatePicker();
-    };
-
-    const handleSelectFrom = (val) => {
-        setCityFrom(val);
-        // alert(val)
-        setFormData({
-            ...formData,
-            cityFrom: val
-        });
+    async function playSound() {
+        console.log('Loading Sound');
+        const { sound } = await Audio.Sound.createAsync(
+           require('../images/sounds/menu.mp3')
+        );
+        setSound(sound);
+    
+        console.log('Playing Sound');
+        await sound.playAsync(); 
     }
 
-    const handleSelectTo = (val) => {
-        setCityTo(val)
-        // alert(val)
-        setFormData({
-            ...formData,
-            cityTo: val
-        });
-    }
 
-    const handleTripDate = (val) => {
-        // alert(val)
-        setFormData({
-            ...formData,
-            TripDate: val
-        });
-    }
+    useEffect(() => {
+        return sound
+            ? () => {
+                console.log('Unloading Sound');
+                sound.unloadAsync(); }
+            : undefined;
+    }, [sound]);
 
-    const handleSubmit = () => {
-        const pageData = formData;
-        // navigation.setParams({pageData});
-        const formSerialize = JSON.stringify({pageData});
-
-        navigation.navigate('FormDetails', {
-            cityFrom: cityFrom,
-            cityTo: cityTo,
-            tripDate: JSON.stringify(tripDate)
-        });
-
-        // navigation.navigate('FormDetails');
-    }
-
-    // ASYNC STORE HERE
-    //  AsyncStorage.setItem('@formData', formData);
+    // console.log('Here',currency)
 
     return (
         <SafeAreaView style={styles.mainContainer}>
-            <View style={styles.headerContainer}>
-                <View style={styles.drawerBarsIcon}>
-                    <FontAwesome name="bars" size={24} color='#003c30' onPress={() => navigation.toggleDrawer()} />
-                </View>
+         <Grid>
+               
+                <Row size={100}>
+                 <View style={styles.formDetailsBg}>
 
                 <View>
-                    <Text style={styles.headerTitle}>CURRENCY</Text>
+                    {loading === true ? (
+                        <Text>Loading...</Text>
+                    ) : (
+                        <FlatList 
+                            data={currency} keyExtractor={item => item.id} 
+                            renderItem={itemData => (
+                                <Chip 
+                                    type="flat"
+                                    icon="check"
+                                    textStyle={{color: '#FFF'}}
+                                    style={{paddingVertical: 5, marginBottom: 15, borderRadius: 5, width: width - 35, backgroundColor: '#003c30'}}
+                                    onPress={() => console.log('Pressed')}>
+                                        {itemData.item.currency.toUpperCase()}
+                                </Chip>
+                            )} />
+
+                    )}
                 </View>
             </View>
+                </Row>
+        </Grid>
+        
+           
 
-            <View style={styles.formDetailsBg}>
-
-            </View>
+           
 
         </SafeAreaView>
     )
@@ -121,17 +98,20 @@ const styles = StyleSheet.create({
         backgroundColor: '#003c30',
     },
     headerContainer: {
+        // justifyContent: 'space-between',
+        height: 150,
+    },
+    headerFloat: {
         flexDirection: 'row',
         alignItems: 'center',
-        // justifyContent: 'space-between',
-        marginTop: 35, 
         paddingVertical: 15,
+        marginTop: 35,
     },
     headerTitle: {
         color: '#FFF',
         fontSize: 15,
-        fontFamily: 'Montserrat-Regular',
-        marginLeft: 50
+        fontFamily: 'Montserrat-Medium',
+        marginLeft: 10,
     },
     drawerBarsIcon: {
         width: 50,
@@ -155,11 +135,46 @@ const styles = StyleSheet.create({
         height: height - 40,
         paddingVertical: 20,
         paddingHorizontal: 10,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        // marginTop: 20,
         // justifyContent: 'center'
         alignItems: 'center',
     },
+    currency__style: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        backgroundColor: '#F1F1F1',
+        marginBottom: 15,
+        color: '#000',
+        borderRadius: 5,
+        width: width - 85,
+        // width: '100%',
+        paddingVertical: 5,
+        height: 50,
+        shadowColor: 'black',
+        shadowOpacity: 0.26,
+        shadowOffset: {width: 0, height: 2},
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    currency__init: {
+        backgroundColor: '#003c30',
+        color: '#fff',
+        height: 50,
+        width: 60,
+        paddingVertical: 15,
+        paddingHorizontal: 10,
+        marginRight: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        fontSize: 15,
+        fontFamily: 'Montserrat-Regular',
+    },
+    currency__value: {
+        fontSize: 15,
+        fontFamily: 'Montserrat-Regular',
+        color: '#003c30'
+    }
 })
 
 export default ChangeCurrencyScreen

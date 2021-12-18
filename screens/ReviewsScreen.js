@@ -9,14 +9,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 
-
 const {width, height} = Dimensions.get('screen');
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import Select from '../components/select';
 import List from '../components/List'
-
-
 
 const ReviewsScreen = ({navigation}) => {
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);

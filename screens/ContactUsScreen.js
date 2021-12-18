@@ -1,13 +1,14 @@
-import React, {useState} from 'react';
-import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, Platform, Dimensions, Image, ScrollView, Button,TextInput } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, ImageBackground, Platform, Dimensions, Image, ScrollView, Button,TextInput } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
 import { Octicons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import moment from 'moment';
-
+import { Row, Grid } from "react-native-easy-grid";
+import { Audio } from 'expo-av';
+import { Chip } from 'react-native-paper';
 
 const {width, height} = Dimensions.get('screen');
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,72 +16,88 @@ import * as Animatable from 'react-native-animatable';
 
 
 const ContactUsScreen = ({navigation}) => {
-    
+    const [sound, setSound] = useState();
+
+    async function playSound() {
+        console.log('Loading Sound');
+        const { sound } = await Audio.Sound.createAsync(
+        require('../images/sounds/menu.mp3')
+        );
+        setSound(sound);
+
+        console.log('Playing Sound');
+        await sound.playAsync(); 
+    }
+
+
+    useEffect(() => {
+        return sound
+            ? () => {
+                console.log('Unloading Sound');
+                sound.unloadAsync(); }
+            : undefined;
+    }, [sound]);
+
     return (
         <SafeAreaView style={styles.mainContainer}>
-            <View style={styles.headerContainer}>
-                <View style={styles.drawerBarsIcon}>
-                    <FontAwesome name="bars" size={24} color='#003c30' onPress={() => navigation.toggleDrawer()} />
-                </View>
+            <Grid>
+                <Row size={100}>
+                    <View style={styles.formDetailsBg}>
 
-                <View>
-                    <Text style={styles.headerTitle}>CONTACT US</Text>
-                </View>
-            </View>
+                        <View style={styles.section}>
+                            <View style={styles.img__bg}>
+                                <Image style={styles.destination_from_img} source={require('../images/icons/phone-one.png')} />
+                            </View>
+                            
 
-            <View style={styles.formDetailsBg}>
+                            <View style={styles.detailsText}>
+                                <Text style={styles.destination_small}>(+233)-(0)-573-100-375</Text>
+                                <Text style={styles.destination_small}>(+233)-(0)-573-100-398</Text>
+                            </View>
+                        </View>
 
-                <View style={styles.section}>
-                    <View style={styles.img__bg}>
-                        <Image style={styles.destination_from_img} source={require('../images/icons/phone-one.png')} />
+                        <View style={styles.section}>
+                            <View style={styles.img__bg}>
+                                <Image style={styles.destination_from_img} source={require('../images/icons/phone-two.png')} />
+                            </View>
+                            
+
+                            <View style={styles.detailsText}>
+                                <Text style={styles.destination_small}>(+233)-(0)-557-943-605</Text>
+                                <Text style={styles.destination_small}>(+233)-(0)-557-943-606</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.section}>
+                            <View style={styles.img__bg}>
+                                <Image style={styles.destination_from_img} source={require('../images/icons/email.png')} />
+                            </View>
+                            
+
+                            <View style={styles.detailsText}>
+                                <Text style={styles.destination_small}>support@stcticketing.gov.gh</Text>
+                                <Text style={styles.destination_small}>info@stc.gov.gh</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.sectionTotal}>
+                            <View style={styles.img__bg}>
+                                <Image style={styles.destination_from_img} source={require('../images/icons/address.png')} />
+                            </View>
+                            
+
+                            <View style={styles.detailsText}>
+                                <Text style={styles.destination_small}>No. 1 Ajuma Crescent opposite Awudome </Text>
+                                <Text style={styles.destination_small}>Cemetery.</Text>
+                                <Text style={styles.destination_small}>P.O.BOX 7384 Ring Road West Industrial</Text>
+                                <Text style={styles.destination_small}>Area Accra.</Text>
+                            </View>
+                        </View>
                     </View>
-                    
 
-                    <View style={styles.detailsText}>
-                        <Text style={styles.destination_small}>(+233)-(0)-573-100-375</Text>
-                        <Text style={styles.destination_small}>(+233)-(0)-573-100-398</Text>
-                    </View>
-                </View>
-
-                <View style={styles.section}>
-                    <View style={styles.img__bg}>
-                        <Image style={styles.destination_from_img} source={require('../images/icons/phone-two.png')} />
-                    </View>
-                    
-
-                    <View style={styles.detailsText}>
-                        <Text style={styles.destination_small}>(+233)-(0)-557-943-605</Text>
-                        <Text style={styles.destination_small}>(+233)-(0)-557-943-606</Text>
-                    </View>
-                </View>
-
-                <View style={styles.section}>
-                    <View style={styles.img__bg}>
-                        <Image style={styles.destination_from_img} source={require('../images/icons/email.png')} />
-                    </View>
-                    
-
-                    <View style={styles.detailsText}>
-                        <Text style={styles.destination_small}>support@stcticketing.gov.gh</Text>
-                        <Text style={styles.destination_small}>info@stc.gov.gh</Text>
-                    </View>
-                </View>
-
-                <View style={styles.sectionTotal}>
-                    <View style={styles.img__bg}>
-                        <Image style={styles.destination_from_img} source={require('../images/icons/address.png')} />
-                    </View>
-                    
-
-                    <View style={styles.detailsText}>
-                        <Text style={styles.destination_small}>No. 1 Ajuma Crescent opposite Awudome </Text>
-                        <Text style={styles.destination_small}>Cemetery.</Text>
-                        <Text style={styles.destination_small}>P.O.BOX 7384 Ring Road West Industrial</Text>
-                        <Text style={styles.destination_small}>Area Accra.</Text>
-                    </View>
-                </View>
-            </View>
-
+                </Row>
+            </Grid>
+            
         </SafeAreaView>
     )
 }
@@ -88,14 +105,11 @@ const ContactUsScreen = ({navigation}) => {
 const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
-        backgroundColor: '#003c30',
+        backgroundColor: '#FFF',
     },
     headerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
         // justifyContent: 'space-between',
-        marginTop: 35, 
-        paddingVertical: 15,
+        height: 150,
     },
     drawerBarsIcon: {
         width: 50,
@@ -119,6 +133,12 @@ const styles = StyleSheet.create({
         fontFamily: 'Montserrat-Regular',
         marginLeft: 30
     },
+    headerFloat: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 15,
+        marginTop: 35,
+    },
     formDetailsBg: {
         backgroundColor: '#f4f5f7',
         width: '100%',
@@ -127,7 +147,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        // justifyContent: 'center'
+        marginTop: 20,
         alignItems: 'center',
     },
     destination_from_img:{

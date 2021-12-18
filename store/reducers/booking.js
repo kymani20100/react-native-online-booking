@@ -1,5 +1,5 @@
 import SeatItem from '../../models/seat-item';
-import { TOGGLE_SEATS} from '../actions/booking';
+import { TOGGLE_SEATS, EMPTY_BOOKING} from '../actions/booking';
 
 const initialState = {
     bookedSeats: {},
@@ -9,28 +9,25 @@ const initialState = {
 const bookingReducer = (state = initialState, action) => {
     switch (action.type) {
         case TOGGLE_SEATS: 
-            
             const addedSeat = action.seat;
             const sId = addedSeat.id;
-             const seatIdNo = addedSeat.seatNo;
+            const seatIdNo = addedSeat.seatNo;
             const seatPrice = addedSeat.price;
 
+             console.log('Booking From Within', action.seat)
+
             let updatedSeatItem;
-
             if (state.bookedSeats[addedSeat.id]) {
-
                 const selectedSeatItem = state.bookedSeats[sId];
-                // console.log("Reducer true", selectedSeatItem);
                 updatedSeatItem = { ...state.bookedSeats };
                 delete updatedSeatItem[sId];
-
                 return {...state, bookedSeats: updatedSeatItem, total: state.total -= +seatPrice};
             }else{
-                console.log("Reducer", false);
                 updatedSeatItem = new SeatItem(sId, seatIdNo, seatPrice);
                 return {...state, bookedSeats: { ...state.bookedSeats, [addedSeat.id]: updatedSeatItem },total: state.total += +seatPrice};
-                // console.log('Reducer',state.bookedSeats);
             }
+        case EMPTY_BOOKING: 
+            return { ...state, bookedSeats: {}, total: 0 }
                   
         default: 
             return state;

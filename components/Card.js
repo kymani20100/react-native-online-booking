@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Vibration } from 'react-native';
 import { Snackbar } from 'react-native-paper';
-
+import { Audio } from 'expo-av';
 // REDUX
 import {useSelector, useDispatch} from 'react-redux';
 // import { toggleSeats } from '../store/actions/booking';
@@ -10,34 +10,39 @@ import * as bookingActions from '../store/actions/booking';
 const Card = (data) => {
     const [isSelected, setIsSelected] = useState(false);
     // const [visible, setVisible] = useState('Hide');
-    // const onToggleSnackBar = () => setVisible(!visible);
+    const [sound, setSound] = useState();
     const onDismissSnackBar = () => setVisible(false);
     // MY API DATA 
-    const { props } = data;
+    const { props, bookedSeats } = data;
     
-    //  console.log('CARD',props)
+    async function playSound() {
+        console.log('Loading Sound');
+        const { sound } = await Audio.Sound.createAsync(
+        require('../images/sounds/ticket.mp3')
+        );
+        setSound(sound);
+
+        console.log('Playing Sound');
+        await sound.playAsync(); 
+    }
+
+
+    useEffect(() => {
+        return sound
+            ? () => {
+                console.log('Unloading Sound');
+                sound.unloadAsync(); }
+            : undefined;
+    }, [sound]);
 
     const dispatch = useDispatch();
     
-    // if(props.length > 0){
-    //     isbookedSeats = useSelector(state =>  state.seats.bookedSeats.some(seat => seat.seatNo === props.seatNo));
-    // }
-
-    //  const isbookedSeats = useSelector(
-    //     state =>  state.seats.seats.find(seat => seat.seatNo === props.seatNo)
-    // );
-     
-
-    // useEffect(()=> {
-    //     isbookedSeats = useSelector(state =>  state.seats.bookedSeats.some(seat => seat.seatNo === props.seatNo));
-    // }, [props])
-
-    //  const toggleSeatsHandler = useCallback(() => {
-    //     setIsSelected(!isSelected);
-    //     dispatch(toggleSeats(props.seatNo));
-    //  }, [dispatch]);
-
     const toggleSeatsHandler = () => {
+        // VIBRATE TO CALL ATTENTION
+        Vibration.vibrate();
+        // if(!isSelected){
+        //     playSound();
+        // }
         setIsSelected(!isSelected);
         dispatch(bookingActions.toggleSeats(props));
     }
@@ -48,7 +53,7 @@ const Card = (data) => {
                 <TouchableOpacity onPress={toggleSeatsHandler}>
                     <View style={styles.card}>
                         <View style={styles.centered__seat__number}>
-                            {isSelected ? (
+                            {bookedSeats.find(seat => seat.seatNo === props.seatNo) ? (
                                 <Image style={styles.flatList__seat} source={require('../images/icons/selected.png')} />
                             ) : (
                                 <Image style={styles.flatList__seat} source={require('../images/icons/seat.png')} />
@@ -60,7 +65,7 @@ const Card = (data) => {
             )}
 
             {props.showStatus === '1' && props.bookStatus === '1' && (
-                <TouchableOpacity onPress={() => {alert('I am Booked')}}>
+                <TouchableOpacity onPress={() => {}}>
                     <View style={styles.card}>
                         <View style={styles.centered__seat__number}>
                             <Image style={styles.flatList__seat} source={require('../images/icons/booked.png')} />
@@ -75,8 +80,6 @@ const Card = (data) => {
 
                     </View>
             )}
-            
-
         </>
 
 }
@@ -84,7 +87,7 @@ const Card = (data) => {
 const styles = StyleSheet.create({
     card: {
         height: 40,
-        backgroundColor: '#F1F1F1',
+        backgroundColor: '#eaeaea',
         width: 40,
         marginHorizontal: 5,
         marginBottom: 10,
@@ -92,11 +95,11 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: "#a5a5a6",
-        shadowOffset: { width: 0, height: 10},
-        shadowOpacity: .5,
-        shadowRadius: 20,
-        elevation: 2,
+        shadowColor: "#8d8d8d",
+        shadowOffset: { width: -5, height: 5},
+        shadowOpacity: .4,
+        shadowRadius: 3,
+        elevation: 4,
     },
     blank_space: {
         height: 35,
@@ -112,7 +115,8 @@ const styles = StyleSheet.create({
     },
     seat__numbering: {
         fontSize: 7,
-        fontFamily: 'Montserrat-Regular',
+        fontFamily: 'Montserrat-SemiBold',
+        color: '#000',
     },
 })
 

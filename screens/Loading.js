@@ -7,7 +7,7 @@ const Loading = () => {
            
             <View style={styles.formDetailsBg}>
                 <View>
-                    <Image source={require('../images/icons/transparent.gif')} style={styles.loading} />
+                    <Image source={require('../images/icons/dots.gif')} style={styles.loading} />
                 </View>
                 <View>
                     <Text style={styles.loading__text}>Loading...</Text>
@@ -21,7 +21,7 @@ const Loading = () => {
 const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
-        backgroundColor: '#F4F4F4',
+        backgroundColor: '#FFF',
     },
     headerContainer: {
         flexDirection: 'row',

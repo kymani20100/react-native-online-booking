@@ -1,8 +1,8 @@
-import React, {useState} from 'react';
-import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity,TouchableWithoutFeedback, Platform, Dimensions, Image, ScrollView } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import { View, Text, SafeAreaView, StyleSheet, KeyboardAvoidingView, ImageBackground, TouchableOpacity,TouchableWithoutFeedback, Platform, Dimensions, Image, ScrollView } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
-import { Octicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { MaterialIcons } from '@expo/vector-icons';
@@ -20,92 +20,81 @@ import List from '../components/List'
 
 const SignUpScreen = ({navigation}) => {
     const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
+
+    
    
     return (
         <SafeAreaView style={styles.mainContainer}>
-            <View style={styles.headerContainer}>
-                <View style={styles.drawerBarsIcon}>
-                    <FontAwesome name="bars" size={24} color='#003c30' onPress={() => navigation.toggleDrawer()} />
+               <View style={styles.headerContainer}>
+                    <ImageBackground source={require('../images/icons/banner.png')} style={{width: '100%', height: 200}}>
+                        <View style={styles.headerFloat}>
+                            <View style={styles.drawerBarsIcon}>
+                                <Ionicons name="arrow-back-outline" size={24} color='#003c30' onPress={() => navigation.goBack()} />
+                            </View>
+
+                            <View>
+                                <Text style={styles.headerTitle}>SIGN UP</Text>
+                            </View>
+                        </View>
+                    </ImageBackground>
                 </View>
-
-                <View>
-                    <Text style={styles.headerTitle}>Sign Up</Text>
-                </View>
-            </View>
-
-            <View style={styles.formDetailsBg}>
-
-                <Avatar.Image size={124} style={styles.avatar__img} source={require('../images/icons/user.png')} />
-
-                <Animatable.View 
-                    animation="fadeInUpBig"
-                    style={styles.footer}>
-                        
-                    <ScrollView>
-
-                        <View style={styles.formScrollHeight}>
-                        <View style={styles.form_layout}>
-                            <View style={styles.form__input__container}>
-                                <TextInput style={styles.text__input} theme={{ colors: { primary: '#003c30',underlineColor:'transparent'}}} mode="outlined" selectionColor="#6e6e6e" underlineColor="#6e6e6e" outlineColor="#6e6e6e" label="Enter Full Name" value={name} placeholder="Full Name" onChangeText={name => setName(name)} />
-                            </View>
-
-                            <View style={styles.form__input__container}>
-                                <TextInput secureTextEntry={true} style={styles.text__input} theme={{ colors: { primary: '#003c30',underlineColor:'transparent'}}} mode="outlined" selectionColor="#6e6e6e" underlineColor="#6e6e6e" outlineColor="#6e6e6e" label="Enter Email" value={email} placeholder="Email" onChangeText={email => setEmail(email)} />
-                            </View>
-
-                            <View style={styles.form__input__container}>
-                                <TextInput style={styles.text__input} theme={{ colors: { primary: '#003c30',underlineColor:'transparent'}}} mode="outlined" selectionColor="#6e6e6e" underlineColor="#6e6e6e" outlineColor="#6e6e6e" label="Enter Mobile Number" value={phone} placeholder="Mobile Number" onChangeText={phone => setPhone(phone)} />
-                            </View>
-
-                            <View style={styles.form__input__container}>
-                                <TextInput secureTextEntry={true} style={styles.text__input} theme={{ colors: { primary: '#003c30',underlineColor:'transparent'}}} mode="outlined" selectionColor="#6e6e6e" underlineColor="#6e6e6e" outlineColor="#6e6e6e" label="Enter Password" value={password} placeholder="Password" onChangeText={password => setPassword(password)} />
-                            </View>
-
-                        </View>
-
-                        <View style={styles.button}>
-                            <TouchableWithoutFeedback
-                                style={styles.signIn}
-                                onPress={() => {alert('working on it!!!')}}
-                            >
-                            <LinearGradient
-                                colors={['#003127','#003c30',  '#003127']}
-                                style={styles.signIn}
-                            >
-                                <Text style={[styles.textSign, {
-                                    color:'#FFF'
-                                }]}>Sign Up</Text>
-                            </LinearGradient>
-                            </TouchableWithoutFeedback>
-
-                                <Text style={styles.signUpLink}>Already have an account?</Text>
-
-                            <TouchableOpacity
-                                onPress={() => {navigation.navigate('SignUp')}}
-                                style={[styles.signIn, {
-                                    borderColor: '#003127',
-                                    borderWidth: 1,
-                                    marginTop: 15
-                                }]}
-                            >
-                                <Text style={[styles.textSign, {
-                                    color: '#003127'
-                                }]}>Sign In</Text>
-                            </TouchableOpacity>
-
-                        </View>
-
-                        </View>
-                    </ScrollView>
-                </Animatable.View>
                
-            </View>
 
-            
+                {/* <Image source={require('../images/logo/logo.png')} style={styles.stc__logo} /> */}
 
+                <View style={styles.formDetailsBg}>
+                     <ScrollView>
+                     <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={200}>
+
+                      <Text style={styles.headerTextSign}>There is no record of that mobile number in our system.</Text>
+                       <Text style={styles.headerTextSignSecondary}>Click below to proceed with the registration process.</Text>  
+                    
+                     {/* <View style={styles.form__input__container}>
+                        <TextInput style={styles.text__input} 
+                        theme={{ colors: { primary: '#003c30',underlineColor:'transparent'}}} 
+                        mode="outlined"
+                        selectionColor="#003c30" 
+                        underlineColor="#003c30" 
+                        outlineColor="grey" 
+                        label="0548 187 719"
+                        keyboardType="numeric"
+                        maxLength={10}
+                        minLength={10}
+                         />
+                    </View> */}
+
+                    <TouchableWithoutFeedback
+                        style={styles.signIn}
+                        onPress={() => {navigation.navigate('OTP')}}>
+                        <LinearGradient
+                        colors={['#003c30',  '#0f352d']}
+                        style={styles.signIn}>
+                            <Text style={[styles.textSign, {
+                                color:'#fff'
+                        }]}>GET OTP</Text>
+                        </LinearGradient>
+                    </TouchableWithoutFeedback>
+
+                    {/* <TouchableOpacity
+                        onPress={() => {navigation.navigate('SignUp')}}
+                        style={[styles.signIn, {
+                            borderColor: '#009387',
+                            borderWidth: 1,
+                            marginTop: 15
+                        }]}>
+                        <Text style={[styles.textSign, {
+                            color: '#009387'
+                        }]}>Authenticate with OTP</Text>
+                    </TouchableOpacity> */}
+                    <View style={styles.ScrollViewMargin}>
+                                
+                    </View>
+                    </KeyboardAvoidingView>
+                     </ScrollView>
+
+                </View>
+           
         </SafeAreaView>
     )
 }
@@ -116,11 +105,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#003c30',
     },
     headerContainer: {
+        // justifyContent: 'space-between',
+        height: 150,
+    },
+    headerFloat: {
         flexDirection: 'row',
         alignItems: 'center',
-        // justifyContent: 'space-between',
-        marginTop: 35, 
         paddingVertical: 15,
+        marginTop: 35,
     },
     drawerBarsIcon: {
         width: 50,
@@ -129,7 +121,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#FFF',
         marginLeft: 25,
-        marginRight: 20,
+        marginRight: 40,
         borderRadius: 20,
         // padding: 15,
         shadowColor: 'black',
@@ -140,9 +132,15 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         color: '#FFF',
-        fontSize: 15,
-        fontFamily: 'Montserrat-Regular',
-        marginLeft: 50,
+        fontSize: 18,
+        fontFamily: 'Montserrat-Medium',
+        marginLeft: 15,
+    },
+    stc__logo: {
+        width: "50%",
+        height: 90,
+        justifyContent: 'center',
+        alignSelf: 'center'
     },
     signUpLink: {
         fontSize: 12,
@@ -156,13 +154,13 @@ const styles = StyleSheet.create({
         paddingBottom: 50
     },
     formDetailsBg: {
-        backgroundColor: '#f4f5f7',
+        backgroundColor: '#FFF',
         width: '100%',
         height: height,
         paddingVertical: 20,
         paddingHorizontal: 10,
         borderRadius: 20,
-        // justifyContent: 'center'
+        marginTop: 20,
         alignItems: 'center',
     },
     avatar__img: {
@@ -181,7 +179,7 @@ const styles = StyleSheet.create({
         // height: 400,
     },
     formScrollHeight: {
-        height: 900,
+        height: 600,
     },
     textSign: {
         fontSize: 15,
@@ -206,12 +204,13 @@ const styles = StyleSheet.create({
     signIn: {
         width: '100%',
         height: 50,
+        marginTop: 15,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 10
     },
     text__input: {
-        width: width - 65,
+        width: width - 20,
         height: 50,
         marginVertical: 10,
     },
@@ -219,6 +218,23 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10
     },
+    form__input__container: {
+        width: width - 20,
+    },
+    ScrollViewMargin: {
+        height: 105,
+    },
+    headerTextSign: {
+        fontSize: 17,
+        fontFamily: 'Montserrat-Regular',
+        marginVertical: 10,
+
+    },
+    headerTextSignSecondary: {
+        fontSize: 15,
+        fontFamily: 'Montserrat-Light',
+    }
+    
 })
 
 export default SignUpScreen

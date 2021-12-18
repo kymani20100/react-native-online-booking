@@ -1,12 +1,16 @@
 import React, {useState, useRef, useEffect} from 'react'
-import { View, SafeAreaView, StatusBar,Text, TouchableOpacity,Modal, FlatList, StyleSheet, Button, Dimensions,Image, Animated,} from 'react-native';
+import { View, SafeAreaView, RefreshControl, StatusBar, Vibration, Text, TouchableOpacity, Modal, FlatList, StyleSheet, ImageBackground, Dimensions,Image, Animated,} from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; 
-import { SearchBar } from 'react-native-elements';
+// import { SearchBar } from 'react-native-elements';
+import { Searchbar, Button, TouchableRipple } from 'react-native-paper';
 // import SkeletonPlaceholder from "react-native-skeleton-placeholder";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSelector, useDispatch } from 'react-redux';
 import * as routeActions from '../store/actions/routes';
+import { Audio } from 'expo-av';
+// import { NavigationActions, StackActions } from 'react-navigation';
 
+import SelectShimmer from "./SelectShimmer";
 const width_proportion = '95%';
 const height_proportion = '70%';
 
@@ -17,9 +21,17 @@ const AVATAR_SIZE = 15;
 const ITEM_SIZE = AVATAR_SIZE + SPACING * 3;
 
 const Select = ({onChangeSelect, text, }) => {
+    const wait = (timeout) => {
+        return new Promise(resolve => setTimeout(resolve, timeout));
+    }
     const [txt, setText] = useState(text);
     const [filteredData, setFilteredData] = useState([]);
     const [rawData, setRawData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [sound, setSound] = useState();
+
+    const [started, setStarted] = useState(true);
     // SEARCH QUERY
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -29,20 +41,59 @@ const Select = ({onChangeSelect, text, }) => {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        dispatch(routeActions.fetchRoutes());
-    },[dispatch])
+        setTimeout(() => {
+            setLoading(false);
+        }, 8000)
+    },[])
 
     useEffect(() => {
-        setFilteredData(routes);
-        setRawData(routes);
+
+        dispatch(routeActions.fetchRoutes()).then(() => {
+            setStarted(false);
+        });
+
+    },[dispatch])
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        setStarted(true);
+        wait(2000).then(() => setRefreshing(false));
+        dispatch(routeActions.fetchRoutes()).then(() => {
+            setStarted(false);
+        });
+      }, []);
+
+    useEffect(() => {
+        setFilteredData(routes.SearchDetail);
+        setRawData(routes.SearchDetail);
     },[routes])
+
+    async function playSound() {
+        console.log('Loading Sound');
+        const { sound } = await Audio.Sound.createAsync(
+           require('../images/sounds/click.wav')
+        );
+        setSound(sound);
+    
+        console.log('Playing Sound');
+        await sound.playAsync(); 
+    }
+
+
+    useEffect(() => {
+        return sound
+            ? () => {
+                console.log('Unloading Sound');
+                sound.unloadAsync(); }
+            : undefined;
+        }, [sound]);
     
 
     const searchFilter = (text) => {
         if(text) {
             const newData  = rawData.filter((item) => {
-                const itemData = item.name ?
-                                 item.name.toUpperCase() : ''.toUpperCase();
+                const itemData = item.Name ?
+                                 item.Name.toUpperCase() : ''.toUpperCase();
                 const textData = text.toUpperCase();
                 return itemData.indexOf(textData) > -1;
             });
@@ -53,11 +104,20 @@ const Select = ({onChangeSelect, text, }) => {
             setSearchQuery(text);
         }
     }
-   
-    // console.log('filtered data',filteredData)
+
+    const BusFooter = () => {
+        return  <View style={styles.footer__bottom}>
+            
+        </View>
+    }
+
+    // var audio = new Audio('');
+
+     console.log('filtered data',routes.Message)
     
     return (
         <View>
+            <StatusBar barStyle="light-content" backgroundColor="#004E3E" />
            <TouchableOpacity style={styles.container} onPress={() => setModalVisible(true)}>
                 <Text style={styles.txt} numberOfLines={1}>{txt}</Text>
            </TouchableOpacity>
@@ -71,40 +131,75 @@ const Select = ({onChangeSelect, text, }) => {
                         </TouchableOpacity>
 
                         <View>
-                            <SearchBar
-                                placeholder="search..."
+                            <Searchbar
+                                placeholder="Search"
                                 onChangeText={(text) => searchFilter(text)}
                                 value={searchQuery}
-                                containerStyle={{flex:1, height: 50,width: width - 50,}}
-                                inputContainerStyle={{height: 35, position: 'relative', top: -10, left: -6,  width: width - 50, backgroundColor: '#FFFFFF',}}
-                                inputStyle={{ backgroundColor: '#FFFFFF', paddingVertical: 10,}}
-                                onCancel={() => {}}
-                                round='true'
-                            />
+                                style={styles.searchBarStyle}
+                                />
                         </View>
                     </View>
 
-  
-                    <Animated.FlatList 
-                            data={filteredData} keyExtractor={item => item.id} 
-                           
-                            renderItem={itemData => (
-                                <TouchableOpacity activeOpacity={.7} key={itemData.item.id} onPress={() => {
-                                    onChangeSelect(itemData.item.name, itemData.item.id)
-                                    setText(itemData.item.name)
-                                    setModalVisible(false)
-                                    }}>
+                    {started && <SelectShimmer />}
+                    {routes.Message === '500_Internal_Server_Error' && (
+                        <View>
+                            <Image style={styles.errorRoute} source={require('../images/icons/route.png')} />
+                            <Text style={styles.errorTextOne}>There seems to be an error</Text>
 
-                                    <Animated.View style={styles.modalItemStyle}>
-                                    
-                                        <View>
-                                            <Text style={styles.modalTextItem}>{itemData.item.name}</Text>
-                                        </View>
-                                    </Animated.View>
-                                </TouchableOpacity>
-                              )}
-                        />
+                            <View style={{justifyContent: 'center', alignItems: 'center', width: width - 45, marginTop: 15}}>
+                                <Button color='#003c30' contentStyle={{height: 35, }} disabled={false} mode="contained"  onPress={onRefresh}>
+                                    Refresh
+                                </Button>
+                            </View>
+                        </View>
+                    )}
 
+                    {routes.Message === 'An error has occurred.' && (
+                        <View>
+                            <Image style={styles.errorRoute} source={require('../images/icons/route.png')} />
+                            <Text style={styles.errorTextOne}>There seems to be an error</Text>
+
+                            <View style={{justifyContent: 'center', alignItems: 'center', width: width - 45, marginTop: 15}}>
+                                <Button color='#003c30' contentStyle={{height: 35, }} disabled={false} mode="contained"  onPress={onRefresh}>
+                                    Refresh
+                                </Button>
+                            </View>
+                        </View>
+                    )}
+                    {routes.Message === 'Record Found.' && (
+                        <Animated.FlatList 
+                        data={filteredData} keyExtractor={item => item.ID} 
+                        ListEmptyComponent={ <SelectShimmer />}
+                        contentContainerStyle = {{paddingVertical:15,}}
+                        refreshControl={
+                            <RefreshControl
+                              refreshing={refreshing}
+                              onRefresh={onRefresh}
+                            />
+                          }
+                        ListFooterComponent={<BusFooter />}
+                        renderItem={itemData => (
+                            <TouchableOpacity activeOpacity={.7} key={itemData.item.ID} >
+                  
+                                <Animated.View>
+                                    <TouchableRipple
+                                    style={styles.modalItemStyle}
+                                            onPress={() => {
+                                            // VIBRATE TO CALL ATTENTION
+                                            Vibration.vibrate(10 * 40);
+                                            onChangeSelect(itemData.item.Name, itemData.item.ID)
+                                            setText(itemData.item.Name)
+                                            setModalVisible(false)
+                                            }}
+                                            rippleColor="rgba(0, 0, 0, .32)">
+                                        <Text style={styles.modalTextItem}>{itemData.item.Name}</Text>
+                                    </TouchableRipple>
+                                </Animated.View>
+                            </TouchableOpacity>
+                        )}
+                    />
+                    )}
+                    
                 </SafeAreaView>
 
            </Modal>
@@ -132,12 +227,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         marginBottom: 10,
         paddingVertical: 10,
+        marginHorizontal: 10,
         backgroundColor: '#FFF',
         borderRadius: 5,
-        shadowColor: "#a5a5a6",
-        shadowOffset: { width: 0, height: 10},
-        shadowOpacity: .5,
-        shadowRadius: 20,
+        shadowColor: "#8d8d8d",
+        shadowOffset: { width: 0, height: 5},
+        shadowOpacity: .4,
+        shadowRadius: 2,
         elevation: 2, 
     },
     modalTextItem: {
@@ -172,6 +268,24 @@ const styles = StyleSheet.create({
     optionTxt: {
         fontSize: 18,
         color: '#555'
+    },
+    searchBarStyle: {
+        width: width - 50,
+        height: 40,
+    },
+    footer__bottom: {
+        height: 60,
+    },
+    errorRoute: {
+        width: 200,
+        height: 200,
+        alignSelf: 'center',
+    },
+    errorTextOne: {
+        alignSelf: 'center',
+        fontSize: 14,
+        color: '#003c30',
+        fontFamily: 'Montserrat-Medium',
     }
 });
 

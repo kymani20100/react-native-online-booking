@@ -1,47 +1,96 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import {DrawerContentScrollView, DrawerItem} from '@react-navigation/drawer';
-import {Avatar, Title, Caption, Paragraph, Drawer, TouchableRipple, Switch, Text} from 'react-native-paper';
-import { FontAwesome } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
+import React, {useState, useEffect} from 'react';
+import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, Share } from 'react-native';
+import { DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
+import {
+  useTheme,
+  Avatar,
+  Title,
+  Caption,
+  Paragraph,
+  Drawer,
+  TouchableRipple,
+  Switch
+} from 'react-native-paper';
+// IMPORT THE ICONS HERE
+import { FontAwesome } from '@expo/vector-icons'; 
+import { Feather } from '@expo/vector-icons'; 
+import { AntDesign } from '@expo/vector-icons'; 
+// import { FontAwesome } from '@expo/vector-icons';
 import { Entypo } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Octicons } from '@expo/vector-icons';
-import { Feather } from '@expo/vector-icons'; 
+// import { Feather } from '@expo/vector-icons'; 
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome5 } from '@expo/vector-icons'; 
+import { useSelector, useDispatch } from 'react-redux';
+import * as authActions from '../store/actions/auth';
 
+export default function CustomDrawerScreen(props) {
 
-export default function DrawerContent(props) {
+  // GET LOGIN CREDENTIAL WITH OTP AND MOBILE NUMBER
+  const dispatch = useDispatch();
+  const tokenCode = useSelector(state =>  state.auth.token);
+  const picUrl = useSelector(state =>  state.auth.pic);
+  const mobile = useSelector(state =>  state.auth.phone);
+  const userName = useSelector(state =>  state.auth.name);
+  const [loading, setLoading] = useState(false);
+  const [login, setLogin] = useState(false);
+
+  const Logout = () => {
+    // DISPATCH ACTION AND LET IT WAIT
+    dispatch(authActions.logout()).then(() => {
+        setLoading(false);  
+    });
+}
+
+const removeAsync = async (key) => {
+  try {
+      await AsyncStorage.removeItem(key);
+      return true;
+  }
+  catch(exception) {
+      return false;
+  }
+}
+
+    const onShare = async () => {
+        try {
+          const result = await Share.share({
+            message:
+              'STC | We Take You There Safely',
+          });
+          if (result.action === Share.sharedAction) {
+            if (result.activityType) {
+              // shared with activity type of result.activityType
+            } else {
+              // shared
+            }
+          } else if (result.action === Share.dismissedAction) {
+            // dismissed
+          }
+        } catch (error) {
+          alert(error.message);
+        }
+      }; 
+
     return (
-        <View style={{flex: 1}}>
-            <DrawerContentScrollView {...props}>
-                <View style={styles.drawerContent}>
-                    <View style={styles.userInfoSection}>
-                        <View style={{flexDirection: 'row', marginTop: 15}}>
-                            <Avatar.Image source={require('../images/explorer.jpg')} size={50} />
-                            <View style={{marginLeft: 15, flexDirection: 'column'}}>
-                                <Title style={styles.title}>
-                                    Emmanuel Kymani
-                                </Title>
+      <View style={{flex: 1}}>
+          <DrawerContentScrollView {...props} contentContainerStyle={{backgroundColor: '#004E3E'}}>
+            <ImageBackground source={require('../images/icons/drawer.jpeg')} style={{padding: 20}}>
+                <Image source={require('../images/icons/user.png')} style={{height: 80, width: 80, borderRadius: 40, marginBottom: 10}} />
+                <Text style={{color: '#FFF', fontSize: 15,}}>{userName}</Text>
+                <View style={{flexDirection: 'row',alignItems: 'center'}}>
+                    {mobile && (<FontAwesome name="phone" size={16} color="white" />) }
+                    <Text style={{color: '#FFF',}}> { mobile}</Text>
+                </View>
+            </ImageBackground>
 
-                                <Caption style={styles.caption}>
-                                    02451601234
-                                </Caption>
-                            </View>
-                        </View>
-
-                        <View style={styles.row}>
-
-                            <View style={styles.section}>
-                                {/* <Paragraph style={[styles.papragraph, styles.caption]}>100 </Paragraph> */}
-                                <Caption style={styles.caption}> kymani201000@gmail.com</Caption>
-                            </View>
-                        </View>
-                    </View>
-
-                    <Drawer.Section style={styles.drawerSection}>
-                        {/* THIS BLOCK IS FOR THE MENU ITEMS */}
-                        <DrawerItem icon={({color, size}) => (
+            <View style={{flex: 1, backgroundColor: '#FFF',paddingTop: 10}}>
+                {/* <DrawerItemList {...props} /> */}
+                <Drawer.Section style={styles.drawerSection}>
+                <DrawerItem icon={({color, size}) => (
                             <FontAwesome name="home" color="black" size={24} />
                         )} 
                         label="Home"
@@ -66,7 +115,7 @@ export default function DrawerContent(props) {
                             <Entypo name="share" size={24} color="black" />
                         )} 
                         label="Share"
-                        onPress={() => {props.navigation.navigate('Share')}}
+                        onPress={onShare}
                         />
 
                         <DrawerItem icon={({color, size}) => (
@@ -75,20 +124,16 @@ export default function DrawerContent(props) {
                         label="Change Currency"
                         onPress={() => {props.navigation.navigate('Currency')}}
                         />
-
-                        <DrawerItem icon={({color, size}) => (
-                            <Feather name="lock" size={24} color="black" />
-                        )} 
-                        label="Change Password"
-                        onPress={() => {props.navigation.navigate('Password')}}
-                        />
-
-                        <DrawerItem icon={({color, size}) => (
-                            <MaterialIcons name="rate-review" size={24} color="black" />
-                        )} 
-                        label="Reviews"
-                        onPress={() => {props.navigation.navigate('Reviews')}}
-                        />
+                        
+                        {mobile !== null && (
+                          <DrawerItem icon={({color, size}) => (
+                              <Feather name="lock" size={24} color="black" />
+                          )} 
+                          label="Change Password"
+                          onPress={() => {props.navigation.navigate('Password')}}
+                          />
+                        )}
+                       
 
                         <DrawerItem icon={({color, size}) => (
                             <Entypo name="creative-commons-attribution" size={24} color="black" />
@@ -103,77 +148,56 @@ export default function DrawerContent(props) {
                         label="Contact Us"
                         onPress={() => {props.navigation.navigate('Contact')}}
                         />
-                        
-                        
                     </Drawer.Section>
+            </View>
+            
+         </DrawerContentScrollView>
 
+         <View style={{padding: 20, borderTopWidth: 1, borderTopColor: '#CCC'}}>
+
+         {userName !== null ? (
+                
+
+              <TouchableOpacity onPress={() => {
+                    removeAsync('userFullname');
+                    removeAsync('userToken');
+                    removeAsync('userID');
+                    removeAsync('userPhoto');
+                    removeAsync('mobile');
+                  dispatch(authActions.Logout()); 
+                  props.navigation.navigate('Home')}} style={{paddingVertical: 15}}>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <Feather name="log-out" size={24} color="black" />
+                    <Text style={{fontSize: 15, marginLeft: 5,}}>Log Out</Text>
                 </View>
-            </DrawerContentScrollView>
-            {/* THIS BLOCK IS FOR THE BOTTOM  */}
-            <Drawer.Section style={styles.bottomDrawerSection}>
-                <DrawerItem icon={({color, size}) => (
-                    <MaterialIcons name="logout" size={24} color="black" />
-                )} 
-                label="Sign Out"
-                onPress={() => {alert('working on it')}}
-                />
-            </Drawer.Section>
-            {/* THIS BLOCK IS FOR THE BOTTOM */}
-        </View>
-    )
-}
+             </TouchableOpacity>
+
+           ) : (
+              <TouchableOpacity onPress={() => {props.navigation.navigate('SignIn', {
+                  traveller: null,
+                  departureTime: null,
+                  serviceType: null,
+                  destinationTerminal: null,
+                })}} style={{paddingVertical: 15}}>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <FontAwesome name="sign-in" size={24} color="black" />
+                    <Text style={{fontSize: 15, marginLeft: 5,}}>Log In</Text>
+                </View>
+            </TouchableOpacity>
+            )}
+
+             
+
+         </View>
+      </View>
+    );
+  }
 
 const styles = StyleSheet.create({
-    drawerContent: {
+    container: {
       flex: 1,
-    },
-    userInfoSection: {
-      paddingLeft: 20,
-      borderBottomColor: '#CCC',
-      borderBottomWidth: 1,
-    //   backgroundColor: 'teal'
-    },
-    title: {
-      fontSize: 14,
-      marginTop: 3,
-      fontFamily: 'Montserrat-Medium'
-    },
-    caption: {
-      fontSize: 11,
-      lineHeight: 14,
-      fontFamily: 'Montserrat-Regular'
-    },
-    row: {
-      marginTop: 20,
-      flexDirection: 'row',
+      backgroundColor: '#fff',
       alignItems: 'center',
-    },
-    section: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginRight: 15,
-    },
-    label: {
-        fontFamily: 'Oswald-Regular'
-    },
-    paragraph: {
-      fontWeight: 'bold',
-      marginRight: 3,
-    },
-    drawerSection: {
-      borderTopColor: '#f4f4f4',
-      marginTop: 15,
-    },
-    bottomDrawerSection: {
-        marginBottom: 15,
-        borderTopColor: '#f4f4f4',
-        borderTopWidth: 1
-    },
-    preference: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
+      justifyContent: 'center',
     },
   });
-

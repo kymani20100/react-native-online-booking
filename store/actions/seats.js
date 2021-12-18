@@ -4,10 +4,6 @@ export const FETCH_SEATS = 'FETCH_SEATS';
 
 import Seat from '../../models/seat';
 
-// export const toggleSeats = (seat) => {
-//     return {type: TOGGLE_SEATS, seat: seat};
-// };
-
 export const emptyBucket = () => {
     return {type: EMPTY_BUCKET};
 }
@@ -15,12 +11,14 @@ export const emptyBucket = () => {
 export const fetchSeats = (fid,tid,tripdate,configId) => {
     return async dispatch => {
         // any async code you want!
-        const response = await fetch('https://stcticketing.gov.gh/api/SeatBooking/SeatArragement', {
+        const response = await fetch('http://67.222.135.25:8024/api/Data/API_SeatArragement', {
           method: 'POST',
           headers: {
-              "Content-Type": 'application/json'
+            "Content-Type": 'application/json',
+            "APITocken": '9D85A0FB-73E1-413C-BC2C-C95DDCD9CD89',
+            "APPType": 'MOBAND'
           },
-          body: JSON.stringify({FID: fid, TID: tid, TravelDate: tripdate, ConfigID: configId})
+          body: JSON.stringify({SourceID: fid, DestinationID: tid, TravelDate: tripdate, TripID: configId})
       })
       const resData = await response.json();
     //  console.log('Seats Data',resData);

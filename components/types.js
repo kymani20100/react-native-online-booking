@@ -1,51 +1,129 @@
-import React, {useState, useRef} from 'react'
-import { View, 
-        SafeAreaView, 
-        StatusBar,
-        Text, 
-        TouchableOpacity,
-        Modal, 
-        FlatList, 
-        StyleSheet,
-        Button, 
-        Dimensions,
-        Image,
-        Animated, 
-        Easing,
-        SafeAreaViewBase,
-        } from 'react-native';
-import { TextInput } from 'react-native-paper';
-import { FontAwesome } from '@expo/vector-icons';
-import { Octicons } from '@expo/vector-icons';
+import React, {useState, useRef, useEffect} from 'react'
+import { View, SafeAreaView, RefreshControl, StatusBar, Vibration, Text, TouchableOpacity, Modal, FlatList, StyleSheet, ImageBackground, Dimensions,Image, Animated,} from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; 
-
+// import { SearchBar } from 'react-native-elements';
+import { Searchbar, Button, TouchableRipple } from 'react-native-paper';
+// import SkeletonPlaceholder from "react-native-skeleton-placeholder";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSelector, useDispatch } from 'react-redux';
+import * as idActions from '../store/actions/idType';
+import { Audio } from 'expo-av';
+// import { NavigationActions, StackActions } from 'react-navigation';
 
+import SelectShimmer from "./SelectShimmer";
 const width_proportion = '95%';
 const height_proportion = '70%';
 
 const { width, height } = Dimensions.get('screen');
-import faker from 'faker'
-
-faker.seed(10);
-const DATA = [...Array(60).keys()].map((_, i) => {
-return {
-    key: faker.datatype.uuid(),
-    name: faker.name.jobType(),
-};
-});
 
 const SPACING = 5;
 const AVATAR_SIZE = 15;
 const ITEM_SIZE = AVATAR_SIZE + SPACING * 3;
 
-const Types = ({onChangeSelect, text}) => {
+const Types = ({onChangeSelect, text, }) => {
+    const wait = (timeout) => {
+        return new Promise(resolve => setTimeout(resolve, timeout));
+    }
     const [txt, setText] = useState(text);
     const [modalVisible, setModalVisible] = useState(false);
-    const scrollY = useRef(new Animated.Value(0)).current;
+    const [filteredData, setFilteredData] = useState([]);
+    const [rawData, setRawData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [sound, setSound] = useState();
+
+    const [started, setStarted] = useState(true);
+    // SEARCH QUERY
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // const [modalVisible, setModalVisible] = useState(false);
+
+    const routes = useSelector(state =>  state.id.availableId);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        setTimeout(() => {
+            setLoading(false);
+        }, 8000)
+    },[])
+
+    useEffect(() => {
+
+        dispatch(idActions.fetchID()).then(() => {
+            setStarted(false);
+        });
+
+        // dispatch(idActions.fetchID());
+
+    },[dispatch])
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        setStarted(true);
+        wait(2000).then(() => setRefreshing(false));
+        dispatch(idActions.fetchID()).then(() => {
+            setStarted(false);
+        });
+      }, []);
+
+
+
+    useEffect(() => {
+       
+        setFilteredData(routes.SearchDetail);
+        setRawData(routes.SearchDetail);
+    },[routes])
+
+    async function playSound() {
+        console.log('Loading Sound');
+        const { sound } = await Audio.Sound.createAsync(
+           require('../images/sounds/click.wav')
+        );
+        setSound(sound);
+    
+        console.log('Playing Sound');
+        await sound.playAsync(); 
+    }
+
+
+    useEffect(() => {
+        return sound
+            ? () => {
+                console.log('Unloading Sound');
+                sound.unloadAsync(); }
+            : undefined;
+        }, [sound]);
+    
+
+    const searchFilter = (text) => {
+        if(text) {
+            const newData  = rawData.filter((item) => {
+                const itemData = item.Nm ?
+                                 item.Nm.toUpperCase() : ''.toUpperCase();
+                const textData = text.toUpperCase();
+                return itemData.indexOf(textData) > -1;
+            });
+            setFilteredData(newData);
+            setSearchQuery(text);
+        }else{
+            setFilteredData(rawData);
+            setSearchQuery(text);
+        }
+    }
+
+    const BusFooter = () => {
+        return  <View style={styles.footer__bottom}>
+            
+        </View>
+    }
+
+    // var audio = new Audio('');
+
+     console.log('filtered data',routes.Message)
     
     return (
         <View>
+            <StatusBar barStyle="light-content" backgroundColor="#004E3E" />
            <TouchableOpacity style={styles.container} onPress={() => setModalVisible(true)}>
                 <Text style={styles.txt} numberOfLines={1}>{txt}</Text>
            </TouchableOpacity>
@@ -55,69 +133,80 @@ const Types = ({onChangeSelect, text}) => {
                     <View style={styles.headerModal}>
                         {/* THIS BLOCK IS THE MODAL */}
                         <TouchableOpacity onPress={() => setModalVisible(false)}>
-                            <Ionicons name="arrow-back-sharp" size={28} color="#003c30" />
+                            <Ionicons name="arrow-back-sharp" size={28} color="#FFFFFF" />
                         </TouchableOpacity>
 
-                        <Text style={styles.modalTitle}>Select ID Type</Text>
-
-                        <TouchableOpacity onPress={() => setModalVisible(false)}>
-                            <Text style={styles.modalCancel}>Cancel</Text>
-                        </TouchableOpacity>
-                        {/* THIS BLOCK IS THE MODAL */}
+                        <View>
+                            <Searchbar
+                                placeholder="Search"
+                                onChangeText={(text) => searchFilter(text)}
+                                value={searchQuery}
+                                style={styles.searchBarStyle}
+                                />
+                        </View>
                     </View>
 
-                    {/* THIS BLOCK IS WHERE THE FLATLIST COMES IN */}
+                    {started && <SelectShimmer />}
+                    {routes.Message === '500_Internal_Server_Error' && (
+                        <View>
+                            <Image style={styles.errorRoute} source={require('../images/icons/route.png')} />
+                            <Text style={styles.errorTextOne}>There seems to be an error</Text>
 
-                    <Animated.FlatList 
-                        data={DATA} keyExtractor={item => item.key} 
-                        onScroll={Animated.event(
-                            [{ nativeEvent: {contentOffset: {y: scrollY}}}],
-                            {useNativeDriver: true}
+                            <View style={{justifyContent: 'center', alignItems: 'center', width: width - 45, marginTop: 15}}>
+                                <Button color='#003c30' contentStyle={{height: 35, }} disabled={false} mode="contained"  onPress={onRefresh}>
+                                    Refresh
+                                </Button>
+                            </View>
+                        </View>
+                    )}
+
+                    {routes.Message === 'An error has occurred.' && (
+                        <View>
+                            <Image style={styles.errorRoute} source={require('../images/icons/route.png')} />
+                            <Text style={styles.errorTextOne}>There seems to be an error</Text>
+
+                            <View style={{justifyContent: 'center', alignItems: 'center', width: width - 45, marginTop: 15}}>
+                                <Button color='#003c30' contentStyle={{height: 35, }} disabled={false} mode="contained"  onPress={onRefresh}>
+                                    Refresh
+                                </Button>
+                            </View>
+                        </View>
+                    )}
+                    {routes.Message === 'Record Found.' && (
+                        <Animated.FlatList 
+                        data={filteredData} keyExtractor={item => item.ID} 
+                        ListEmptyComponent={ <SelectShimmer />}
+                        contentContainerStyle = {{paddingVertical:15,}}
+                        refreshControl={
+                            <RefreshControl
+                              refreshing={refreshing}
+                              onRefresh={onRefresh}
+                            />
+                          }
+                        ListFooterComponent={<BusFooter />}
+                        renderItem={itemData => (
+                            <TouchableOpacity activeOpacity={.7} key={itemData.item.ID} >
+                  
+                                <Animated.View>
+                                    <TouchableRipple
+                                    style={styles.modalItemStyle}
+                                            onPress={() => {
+                                            // VIBRATE TO CALL ATTENTION
+                                            Vibration.vibrate(10 * 40);
+                                            onChangeSelect(itemData.item.Nm)
+                                            setText(itemData.item.Nm)
+                                            setModalVisible(false)
+
+                                            }}
+                                            rippleColor="rgba(0, 0, 0, .32)">
+                                        <Text style={styles.modalTextItem}>{itemData.item.Nm}</Text>
+                                    </TouchableRipple>
+                                </Animated.View>
+                            </TouchableOpacity>
                         )}
-                        contentContainerStyle={{
-                            padding: SPACING,
-                            paddingTop: StatusBar.currentHeight || 42
-                        }}
-                        renderItem={({item, index}) => {
-                            const inputRange = [
-                                -1,
-                                0,
-                                ITEM_SIZE * index,
-                                ITEM_SIZE * (index + 2)
-                            ]
-                            const opacityInputRange = [
-                                -1,
-                                0,
-                                ITEM_SIZE * index,
-                                ITEM_SIZE * (index + 1)
-                            ]
-                            const scale = scrollY.interpolate({
-                                inputRange,
-                                outputRange: [1,1,1,0]
-                            })
-                            const opacity = scrollY.interpolate({
-                                inputRange: opacityInputRange,
-                                outputRange: [1,1,1,0]
-                            })
-
-
-                            return (
-                                <TouchableOpacity onPress={() => {
-                                    onChangeSelect(item.name)
-                                    setText(item.name)
-                                    setModalVisible(false)
-                                    }}>
-
-                                    <Animated.View style={styles.modalItemStyle}>
-                                      
-                                        <View>
-                                            <Text style={styles.modalTextItem}>{item.name}</Text>
-                                        </View>
-                                    </Animated.View>
-                                </TouchableOpacity>
-                            );
-                        }}
                     />
+                    )}
+                    
                 </SafeAreaView>
 
            </Modal>
@@ -136,7 +225,7 @@ const styles = StyleSheet.create({
         width: width
     },
     txt: {
-        color: '#747474',
+        color: '#003c30',
         fontSize: 16,
     },
     modalItemStyle:{
@@ -145,18 +234,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         marginBottom: 10,
         paddingVertical: 10,
+        marginHorizontal: 10,
         backgroundColor: '#FFF',
         borderRadius: 5,
-        shadowColor: "#a5a5a6",
-        shadowOffset: { width: 0, height: 10},
-        shadowOpacity: .5,
-        shadowRadius: 20,
+        shadowColor: "#8d8d8d",
+        shadowOffset: { width: 0, height: 5},
+        shadowOpacity: .4,
+        shadowRadius: 2,
         elevation: 2, 
     },
     modalTextItem: {
         color: '#003c30',
-        fontSize: 18,
-        fontFamily: 'Montserrat-Medium'
+        fontSize: 16,
+        fontFamily: 'Montserrat-Medium',
+        
     },
     headerModal: {
         flexDirection: 'row',
@@ -166,12 +257,7 @@ const styles = StyleSheet.create({
         borderBottomColor: '#ddd',
         borderBottomWidth: 1,
         paddingVertical: 15,
-        backgroundColor: '#F2F2F2',
-    },
-    modalTitle: {
-        fontSize: 18,
-        color: '#003c30',
-        fontFamily: 'Montserrat-ExtraBold',
+        backgroundColor: '#003c30',
     },
     modalCancel: {
         fontSize: 14,
@@ -189,7 +275,25 @@ const styles = StyleSheet.create({
     optionTxt: {
         fontSize: 18,
         color: '#555'
+    },
+    searchBarStyle: {
+        width: width - 50,
+        height: 40,
+    },
+    footer__bottom: {
+        height: 60,
+    },
+    errorRoute: {
+        width: 200,
+        height: 200,
+        alignSelf: 'center',
+    },
+    errorTextOne: {
+        alignSelf: 'center',
+        fontSize: 14,
+        color: '#003c30',
+        fontFamily: 'Montserrat-Medium',
     }
 });
 
-export default Types;
+export default Types
